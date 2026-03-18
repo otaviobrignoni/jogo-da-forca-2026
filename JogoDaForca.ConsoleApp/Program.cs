@@ -12,6 +12,8 @@ class Program
             string randomWord = GetRandomWord();
             char[] guessedWordState = InitializeWord(randomWord);
             RunGame(randomWord, guessedWordState);
+            Thread.Sleep(750);
+            Console.WriteLine();
             if (!ContinuePrompt()) break;
         }
     }
@@ -26,10 +28,37 @@ class Program
         {
             PrintInfo(string.Join("", guessedWord), guessesLeft);
             Console.WriteLine($"Letras já inseridas: {string.Join(" ", guessedLetters.Order())}");
-            Console.WriteLine("\nDigite uma letra…");
+            Console.WriteLine("\nDigite uma letra, ou pressione [Tab↹] para tentar adivinhar a palavra inteira…");
 
             var keyInfo = Console.ReadKey(true);
             char guess = char.ToUpperInvariant(keyInfo.KeyChar);
+
+            if (keyInfo.Key == ConsoleKey.Tab)
+            {
+                string? fullWordGuess = null;
+                PrintInfo(string.Join("", guessedWord), guessesLeft);
+                Console.WriteLine($"Letras já inseridas: {string.Join(" ", guessedLetters.Order())}");
+                Console.Write("\nDigite a palavra inteira: ");
+                fullWordGuess = Console.ReadLine()?.ToUpperInvariant();
+                if (fullWordGuess == randomWord)
+                {
+                    guessedWord = randomWord.ToCharArray();
+                    playerWon = true;
+                }
+                else
+                {
+                    guessesLeft--;
+                    playerLost = guessesLeft == 0;
+                }
+
+
+                if (playerWon)
+                    PrintInfo(string.Join("", guessedWord), msg: "Você ganhou!");
+                else if (playerLost)
+                    PrintInfo(string.Join("", guessedWord), msg: $"Você perdeu…\nA palavra era {randomWord}.");
+
+                continue;
+            }
 
             if (char.IsLetter(guess))
             {
@@ -43,14 +72,9 @@ class Program
             playerLost = guessesLeft == 0;
 
             if (playerWon)
-            {
                 PrintInfo(word: string.Join("", guessedWord), msg: "Você ganhou!");
-
-            }
             else if (playerLost)
-            {
-                PrintInfo(word: string.Join("", guessedWord), msg: "Você perdeu…");
-            }
+                PrintInfo(word: string.Join("", guessedWord), msg: $"Você perdeu…\nA palavra era {randomWord}.");
         }
     }
     static char[] InitializeWord(string word)
