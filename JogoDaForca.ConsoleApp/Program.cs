@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
+using static JogoDaForca.ConsoleApp.WordsRepository;
 
 namespace JogoDaForca.ConsoleApp;
 
@@ -11,7 +11,8 @@ static class Program
         Console.CursorVisible = false;
         while (true)
         {
-            string randomWord = GetRandomWord();
+            var selection = SelectMenuOption();
+            string randomWord = GetRandomWord(selection.category);
             char[] guessedWordState = InitializeWord(randomWord);
             RunGame(randomWord, guessedWordState);
             Thread.Sleep(750);
@@ -71,7 +72,7 @@ static class Program
     }
     static char[] InitializeWord(string word)
     {
-        return Enumerable.Repeat('_', word.Length).ToArray();
+        return word.Select(c => c == ' ' ? ' ' : '_').ToArray();
     }
     static string NormaliseString(string input)
     {
@@ -95,42 +96,6 @@ static class Program
 
             if (normalizedWordChar == normalizedGuess) guessedWord[i] = word[i]; // keep original accent
         }
-    }
-    static string GetRandomWord()
-    {
-        string[] words = [
-            "ABACAXI",
-            "ACEROLA",
-            "AÇAÍ",
-            "ARAÇÁ",
-            "ABACATE",
-            "BACABA",
-            "BACURI",
-            "BANANA",
-            "CAJÁ",
-            "CAJU",
-            "CARAMBOLA",
-            "CUPUAÇU",
-            "GRAVIOLA",
-            "GOIABA",
-            "JABUTICABA",
-            "JENIPAPO",
-            "MAÇÃ",
-            "MANGABA",
-            "MANGA",
-            "MARACUJÁ",
-            "MURICI",
-            "PEQUI",
-            "PITANGA",
-            "PITAYA",
-            "SAPOTI",
-            "TANGERINA",
-            "UMBU",
-            "UVA",
-            "UVAIA"
-        ];
-
-        return words[RandomNumberGenerator.GetInt32(words.Length)];
     }
     static void DrawLittleGuy(int guessesLeft)
     {
@@ -178,6 +143,106 @@ static class Program
             PrintInfo(word: guessedWord, msg: "Você ganhou!", count: guessesLeft);
         else if (playerLost)
             PrintInfo(word: guessedWord, msg: $"Você perdeu…\nA palavra era {randomWord}.", count: guessesLeft);
+    }
+    static (Difficulty difficulty, Category category) SelectMenuOption()
+    {
+        Difficulty[] difficulties = [Difficulty.Easy, Difficulty.Medium, Difficulty.Hard];
+
+        int difficultyIndex = 0;
+        int categoryIndex = 0;
+
+        while (true)
+        {
+            Console.Clear();
+
+            DrawDifficultyMenu(difficulties, difficultyIndex);
+
+            Category[] categories = GetCategories(difficulties[difficultyIndex]);
+
+            DrawCategories(categories, categoryIndex);
+
+            Console.WriteLine("\nUse ← → para dificuldade, ↑ ↓ para categoria, ENTER para confirmar.");
+
+            ConsoleKey key = Console.ReadKey(true).Key;
+
+            switch (key)
+            {
+                case ConsoleKey.LeftArrow:
+                    if (difficultyIndex > 0)
+                    {
+                        difficultyIndex--;
+                        categoryIndex = 0;
+                    }
+                    break;
+
+                case ConsoleKey.RightArrow:
+                    if (difficultyIndex < difficulties.Length - 1)
+                    {
+                        difficultyIndex++;
+                        categoryIndex = 0;
+                    }
+                    break;
+
+                case ConsoleKey.UpArrow:
+                    if (categoryIndex > 0)
+                        categoryIndex--;
+                    break;
+
+                case ConsoleKey.DownArrow:
+                    if (categoryIndex < categories.Length - 1)
+                        categoryIndex++;
+                    break;
+
+                case ConsoleKey.Enter:
+                    return (difficulties[difficultyIndex], categories[categoryIndex]);
+            }
+        }
+    }
+    static void DrawDifficultyMenu(Difficulty[] difficulties, int selectedIndex)
+    {
+        string[] top = new string[difficulties.Length];
+        string[] middle = new string[difficulties.Length];
+        string[] bottom = new string[difficulties.Length];
+
+        for (int i = 0; i < difficulties.Length; i++)
+        {
+            string label = difficulties[i] switch
+            {
+                Difficulty.Easy => " FÁCIL ",
+                Difficulty.Medium => " MÉDIO ",
+                Difficulty.Hard => " DIFÍCIL ",
+                _ => ""
+            };
+
+            bool selected = i == selectedIndex;
+
+            if (selected)
+            {
+                top[i] = $"╔{new string('═', label.Length)}╗";
+                middle[i] = $"║{label}║";
+                bottom[i] = $"╚{new string('═', label.Length)}╝";
+            }
+            else
+            {
+                top[i] = $"┌{new string('─', label.Length)}┐";
+                middle[i] = $"│{label}│";
+                bottom[i] = $"└{new string('─', label.Length)}┘";
+            }
+        }
+
+        Console.WriteLine(string.Join("  ", top));
+        Console.WriteLine(string.Join("  ", middle));
+        Console.WriteLine(string.Join("  ", bottom));
+    }
+    static void DrawCategories(Category[] categories, int selectedIndex)
+    {
+        Console.WriteLine("Categorias:\n");
+
+        for (int i = 0; i < categories.Length; i++)
+        {
+            bool selected = i == selectedIndex;
+            Console.WriteLine(selected ? $" → {categories[i].Name}" : $"   {categories[i].Name}");
+        }
     }
     static bool ContinuePrompt()
     {
