@@ -6,7 +6,6 @@ Implementação de um jogo da forca em C#, executado no terminal.
 
 ## 📸 Demonstração
 
-<!-- Coloque aqui o GIF do jogo rodando -->
 ![Demonstração](https://i.imgur.com/jPAk8Ch.gif)
 
 ---
